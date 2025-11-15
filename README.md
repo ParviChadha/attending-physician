@@ -33,6 +33,14 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Create the PostgreSQL database referenced in `DATABASE_URL` first. During startup the API creates the `leads` table automatically and exposes Swagger docs at `/docs`. For quick local testing you can point `DATABASE_URL` at `sqlite:///./dev.db` and keep `ALLOWED_ORIGINS=http://localhost:5173`, then swap back to Postgres before deploying.
 
+#### Retrieval-Augmented Workflow
+
+The backend now ships with an optional RAG layer that enriches the Attending Physician workflow using the `medical_embeddings` table in Postgres:
+
+1. Run `~/Downloads/ap-test-json2/embed_to_sqlite.ipynb` (or your own pipeline) to build `pubmedqa_embeddings.db`.
+2. Import those embeddings into Postgres with `backend/scripts/upload_embeddings.py --postgres-url "<render-url>" --sslrootcert isrgrootx1-selfsigned.pem`. The script is resumable via `--offset`.
+3. Set `RAG_ENABLED=true` (and optionally `RAG_TOP_K`, `RAG_MODEL_NAME`) on the FastAPI deployment. Responses will report `medical_questions_extracted` and `rag_context_available` so the UI can confirm retrieval occurred.
+
 ## Deploying the stack
 
 1. **Backend + DB** – Use a PaaS with HTTPS and managed Postgres (Render, Railway, Fly.io, Heroku). Supply `DATABASE_URL`, `ALLOWED_ORIGINS`, and `API_PREFIX` env vars. Render can host both the API and DB so you avoid custom DevOps—just be sure both resources live in the same region to keep latency low.
