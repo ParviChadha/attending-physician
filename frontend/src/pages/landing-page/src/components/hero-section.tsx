@@ -1,5 +1,6 @@
+import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Mic, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 export function HeroSection() {
@@ -23,9 +24,11 @@ export function HeroSection() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6">
-                Start Training
-                <MessageSquare className="ml-2 h-5 w-5" />
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6" asChild>
+                <Link to="/chat">
+                  Start Training
+                  <MessageSquare className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
             </div>
             

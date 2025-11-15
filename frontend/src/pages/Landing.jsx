@@ -1,8 +1,13 @@
 import LandingPageApp from './landing-page/src/App'
-import './landing-page/src/index.css'
+import landingPageStyles from './landing-page/src/index.css?raw'
 
 function LandingPage() {
-  return <LandingPageApp />
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: landingPageStyles }} />
+      <LandingPageApp />
+    </>
+  )
 }
 
 export default LandingPage
