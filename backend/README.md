@@ -25,7 +25,7 @@ Create the database referenced in `DATABASE_URL` before starting Uvicorn. Tables
 | Name | Description |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string. For local smoke tests you can set `sqlite:///./dev.db`, but use the managed Postgres URL in production. |
-| `ALLOWED_ORIGINS` | Comma-separated list of origins allowed to hit the API (include the GitHub Pages URL). |
+| `ALLOWED_ORIGINS` | Comma-separated list of origins allowed to hit the API. Use bare origins only (`https://example.com`, no paths or trailing slash). |
 | `API_PREFIX` | Root path for API routes, defaults to `/api`. |
 | `APP_ENV` | Optional string for logging/observability.
 
