@@ -206,6 +206,11 @@ export default function NewChat() {
       return;
     }
 
+    if (presentation.trim().length < 40) {
+      setError('Please provide at least 40 characters so the coach can evaluate the case.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 

@@ -20,8 +20,11 @@ interface CasePresentationProps {
   isLoading?: boolean;
 }
 
+const buildDefaultPresentation = (info: CaseInfo) =>
+  `${info.title}: ${info.patientDetails} presenting with ${info.chiefComplaint}. Vitals: ${info.vitals}. Initial assessment: ${info.initialAssessment}.`;
+
 export default function CasePresentation({ caseInfo, onSubmit, onBack, error, isLoading }: CasePresentationProps) {
-  const [presentation, setPresentation] = useState('');
+  const [presentation, setPresentation] = useState(() => buildDefaultPresentation(caseInfo));
 
   const handleSubmit = () => {
     if (presentation.trim()) {
