@@ -21,6 +21,8 @@ Deploy to GitHub Pages using:
 npm run deploy
 ```
 
+Here is the deployed link to view our website: https://parvichadha.github.io/attending-physician/ 
+
 ### Backend
 
 ```bash
