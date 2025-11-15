@@ -317,6 +317,25 @@ footer a {
   align-items: start;
 }
 
+.chat-page {
+  gap: 1.5rem;
+}
+
+.chat-page__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.5rem;
+  border-radius: 28px;
+  background: rgba(8, 11, 22, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.chat-page__header h1 {
+  margin: 0.25rem 0;
+}
+
 .chat-panel {
   background: rgba(7, 11, 24, 0.95);
   border-radius: 28px;

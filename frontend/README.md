@@ -30,7 +30,7 @@ npm install
 npm run dev
 ```
 
-This runs the Vite dev server on [http://localhost:5173](http://localhost:5173) with hot module reloading.
+This runs the Vite dev server on [http://localhost:5173](http://localhost:5173) with hot module reloading. The marketing page lives on `/` and the live chatbot demo is mounted at `/chat`.
 
 ## Production build
 
