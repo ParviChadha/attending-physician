@@ -1,4 +1,4 @@
-import { Brain, Mic, MessageSquare, Clock, Target, Award } from "lucide-react";
+import { Brain, Mic, MessageSquare, Clock, Target, Award, Workflow } from "lucide-react";
 
 export function FeaturesSection() {
   const features = [
@@ -25,6 +25,12 @@ export function FeaturesSection() {
       title: "RAG-Powered Medical Knowledge",
       description: "Our chatbot uses Retrieval-Augmented Generation (RAG) grounded in verified medical sources and clinical guidelines.",
       color: "blue"
+    },
+    {
+      icon: Workflow,
+      title: "Agentic AI Model",
+      description: "Powered by an agentic workflow with expert medical knowledge that dynamically reasons through complex scenarios and provides contextual feedback.",
+      color: "orange"
     }
   ];
   
@@ -32,7 +38,8 @@ export function FeaturesSection() {
     blue: "bg-blue-100 text-blue-600",
     purple: "bg-purple-100 text-purple-600",
     cyan: "bg-cyan-100 text-cyan-600",
-    green: "bg-green-100 text-green-600"
+    green: "bg-green-100 text-green-600",
+    orange: "bg-orange-100 text-orange-600"
   };
   
   return (
@@ -48,19 +55,35 @@ export function FeaturesSection() {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <div key={index} className="flex flex-col space-y-4 p-6 rounded-xl hover:bg-gray-50 transition-all">
-                <div className={`w-12 h-12 rounded-lg ${colorMap[feature.color]} flex items-center justify-center`}>
-                  <Icon className="h-6 w-6" />
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+            {features.slice(0, 3).map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div key={index} className="flex flex-col space-y-4 p-6 rounded-xl hover:bg-gray-50 transition-all">
+                  <div className={`w-12 h-12 rounded-lg ${colorMap[feature.color]} flex items-center justify-center`}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl text-gray-900">{feature.title}</h3>
+                  <p className="text-gray-600">{feature.description}</p>
                 </div>
-                <h3 className="text-xl text-gray-900">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {features.slice(3).map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div key={index + 3} className="flex flex-col space-y-4 p-6 rounded-xl hover:bg-gray-50 transition-all">
+                  <div className={`w-12 h-12 rounded-lg ${colorMap[feature.color]} flex items-center justify-center`}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl text-gray-900">{feature.title}</h3>
+                  <p className="text-gray-600">{feature.description}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

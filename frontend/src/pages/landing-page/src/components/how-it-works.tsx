@@ -3,22 +3,16 @@ import { FileText, MessageCircle, CheckCircle } from "lucide-react";
 export function HowItWorks() {
   const steps = [
     {
-      icon: FileText,
-      title: "Receive a Case",
-      description: "You'll be presented with a realistic patient scenario that requires triage assessment.",
-      step: "01"
-    },
-    {
       icon: MessageCircle,
       title: "Present to AI Coach",
       description: "Use voice or text to present your assessment and triage decision to the AI medical coach.",
-      step: "02"
+      step: "01"
     },
     {
       icon: CheckCircle,
       title: "Get Expert Feedback",
       description: "Receive immediate, personalized feedback on your decision-making process and clinical reasoning.",
-      step: "03"
+      step: "02"
     }
   ];
   
@@ -30,11 +24,11 @@ export function HowItWorks() {
             How It Works
           </h2>
           <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-            Simple, effective training in three steps
+            Simple, effective training in two steps
           </p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
