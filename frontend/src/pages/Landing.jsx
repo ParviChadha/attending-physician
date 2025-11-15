@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
 
 import '../App.css'
 
@@ -58,49 +57,7 @@ const testimonials = [
   },
 ]
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? ''
-const initialFormState = { email: '', organization: '', message: '' }
-
 function LandingPage() {
-  const backendConfigured = Boolean(API_BASE_URL)
-  const [formData, setFormData] = useState(initialFormState)
-  const [status, setStatus] = useState({ state: 'idle', message: '' })
-
-  const handleChange = (event) => {
-    const { name, value } = event.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-
-    if (status.state === 'loading') return
-
-    if (!backendConfigured) {
-      setStatus({ state: 'error', message: 'Set VITE_API_BASE_URL before collecting submissions.' })
-      return
-    }
-
-    setStatus({ state: 'loading', message: 'Sending your request...' })
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/leads`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}))
-        throw new Error(payload?.detail ?? 'Unable to submit right now.')
-      }
-
-      setFormData(initialFormState)
-      setStatus({ state: 'success', message: 'Thanks! We will be in touch shortly.' })
-    } catch (error) {
-      setStatus({ state: 'error', message: error.message ?? 'Something went wrong. Try again later.' })
-    }
-  }
 
   return (
     <div className="app">
@@ -112,11 +69,11 @@ function LandingPage() {
           interaction for your care teams.
         </p>
         <div className="hero__buttons">
-          <a className="btn primary" href="#contact">
-            Book a walk-through
-          </a>
+          <Link className="btn primary" to="/chat">
+            Start Training Now
+          </Link>
           <Link className="btn secondary" to="/chat">
-            Try the live chatbot
+            Try the live demo
           </Link>
         </div>
         <div className="hero__stats">
@@ -184,57 +141,18 @@ function LandingPage() {
       </section>
 
       <section className="contact" id="contact">
-        <div className="contact__copy">
-          <p className="eyebrow">Launch checklist</p>
-          <h2>Ready to meet the chatbot?</h2>
+        <div className="contact__copy" style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
+          <p className="eyebrow">Ready to get started?</p>
+          <h2>Try the AI Medical Coach</h2>
           <p>
-            Drop your details and we’ll share the Render/Postgres template plus a guided tour of the backend endpoints.
+            Experience interactive clinical training with real-time feedback and comprehensive metrics tracking.
           </p>
-          {!backendConfigured && (
-            <p className="contact__notice">
-              Tip: set <code>VITE_API_BASE_URL</code> to the deployed backend URL so submissions are stored automatically.
-            </p>
-          )}
+          <div style={{ marginTop: '2rem' }}>
+            <Link className="btn primary" to="/chat" style={{ fontSize: '1.125rem', padding: '1rem 2rem' }}>
+              Launch Training Session
+            </Link>
+          </div>
         </div>
-        <form className="contact__form" onSubmit={handleSubmit}>
-          <label>
-            Work email
-            <input
-              type="email"
-              name="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Organization
-            <input
-              type="text"
-              name="organization"
-              autoComplete="organization"
-              value={formData.organization}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            What should we cover?
-            <textarea
-              name="message"
-              rows="4"
-              value={formData.message}
-              onChange={handleChange}
-              placeholder="Integrations, compliance, pricing..."
-              required
-            />
-          </label>
-          <button className="btn primary" type="submit" disabled={status.state === 'loading'}>
-            {status.state === 'loading' ? 'Sending...' : 'Request a walkthrough'}
-          </button>
-          {status.message && <p className={`status status--${status.state}`}>{status.message}</p>}
-        </form>
       </section>
 
       <footer>
