@@ -111,6 +111,38 @@ export default function NewChat() {
     }
   };
 
+  const metricKeyMap: Record<keyof Metrics, string[]> = {
+    focusedInformation: ['focused_relevant_information', '1'],
+    workingDiagnosis: ['clear_working_diagnosis', '2'],
+    clinicalReasoning: ['logical_organization_reasoning', '3'],
+    differentialDiagnosis: ['differential_diagnosis', '4'],
+    conciseness: ['conciseness_efficiency', '5'],
+    diagnosticWorkup: ['diagnostic_workup_plan', '6'],
+    managementPlan: ['management_plan_disposition', '7'],
+    hypothesisDriven: ['hypothesis_driven_inquiry', '8'],
+    synthesis: ['synthesis_ability', '9'],
+  };
+
+  const deriveMetricScore = (metricsData: any, keys: string[]) => {
+    for (const key of keys) {
+      const entry = metricsData?.[key];
+      if (!entry) continue;
+
+      if (typeof entry === 'number') {
+        return Math.round(entry);
+      }
+
+      if (typeof entry?.confidence === 'number') {
+        return Math.round(entry.confidence * 100);
+      }
+
+      if (typeof entry?.score === 'number') {
+        return Math.round(entry.score);
+      }
+    }
+    return 0;
+  };
+
   const hydrateFromSession = (payload: any) => {
     const state = payload.state;
     if (!state) return;
@@ -180,15 +212,15 @@ export default function NewChat() {
     if (state.metrics_status) {
       const metricsData = state.metrics_status;
       setMetrics({
-        focusedInformation: metricsData.focused_relevant_information?.confidence ? metricsData.focused_relevant_information.confidence * 100 : 0,
-        workingDiagnosis: metricsData.clear_working_diagnosis?.confidence ? metricsData.clear_working_diagnosis.confidence * 100 : 0,
-        clinicalReasoning: metricsData.logical_organization_reasoning?.confidence ? metricsData.logical_organization_reasoning.confidence * 100 : 0,
-        differentialDiagnosis: metricsData.differential_diagnosis?.confidence ? metricsData.differential_diagnosis.confidence * 100 : 0,
-        conciseness: metricsData.conciseness_efficiency?.confidence ? metricsData.conciseness_efficiency.confidence * 100 : 0,
-        diagnosticWorkup: metricsData.diagnostic_workup_plan?.confidence ? metricsData.diagnostic_workup_plan.confidence * 100 : 0,
-        managementPlan: metricsData.management_plan_disposition?.confidence ? metricsData.management_plan_disposition.confidence * 100 : 0,
-        hypothesisDriven: metricsData.hypothesis_driven_inquiry?.confidence ? metricsData.hypothesis_driven_inquiry.confidence * 100 : 0,
-        synthesis: metricsData.synthesis_ability?.confidence ? metricsData.synthesis_ability.confidence * 100 : 0,
+        focusedInformation: deriveMetricScore(metricsData, metricKeyMap.focusedInformation),
+        workingDiagnosis: deriveMetricScore(metricsData, metricKeyMap.workingDiagnosis),
+        clinicalReasoning: deriveMetricScore(metricsData, metricKeyMap.clinicalReasoning),
+        differentialDiagnosis: deriveMetricScore(metricsData, metricKeyMap.differentialDiagnosis),
+        conciseness: deriveMetricScore(metricsData, metricKeyMap.conciseness),
+        diagnosticWorkup: deriveMetricScore(metricsData, metricKeyMap.diagnosticWorkup),
+        managementPlan: deriveMetricScore(metricsData, metricKeyMap.managementPlan),
+        hypothesisDriven: deriveMetricScore(metricsData, metricKeyMap.hypothesisDriven),
+        synthesis: deriveMetricScore(metricsData, metricKeyMap.synthesis),
       });
     }
 
