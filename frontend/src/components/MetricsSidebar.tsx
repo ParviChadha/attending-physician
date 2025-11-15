@@ -1,9 +1,11 @@
 import { Card } from './ui/card';
 import { Metrics } from '../App';
 import { TrendingUp, CheckCircle2, Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface MetricsSidebarProps {
   metrics: Metrics;
+  className?: string;
 }
 
 const metricLabels = {
@@ -30,7 +32,7 @@ const metricDescriptions = {
   synthesis: 'Provides summary statements, distills key clues'
 };
 
-export default function MetricsSidebar({ metrics }: MetricsSidebarProps) {
+export default function MetricsSidebar({ metrics, className }: MetricsSidebarProps) {
   const getColorClass = (value: number) => {
     if (value >= 80) return 'text-green-600';
     if (value >= 60) return 'text-yellow-600';
@@ -51,7 +53,7 @@ export default function MetricsSidebar({ metrics }: MetricsSidebarProps) {
   const isMostImportant = (key: keyof Metrics) => key === 'focusedInformation';
 
   return (
-    <div className="w-96 bg-white border-l border-blue-100 p-6 overflow-y-auto">
+    <div className={cn("w-full bg-white p-6 overflow-y-auto", className)}>
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-blue-600" />

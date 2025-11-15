@@ -7,6 +7,7 @@ import { ArrowLeft, Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import CasePresentation from '@/components/CasePresentation';
 import MetricsSidebar from '@/components/MetricsSidebar';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? '';
 const SESSION_KEY = 'ap-chat-session';
@@ -71,6 +72,7 @@ export default function NewChat() {
     synthesis: 0
   });
   const [sessionComplete, setSessionComplete] = useState(false);
+  const [isMobileMetricsOpen, setIsMobileMetricsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
