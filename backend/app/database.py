@@ -1,0 +1,21 @@
+"""Database session helpers."""
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+from .config import get_settings
+
+settings = get_settings()
+engine = create_engine(settings.database_url, pool_pre_ping=True)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+Base = declarative_base()
+
+
+def get_session():
+    """Provide a SQLAlchemy session to FastAPI dependencies."""
+
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()

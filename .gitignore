@@ -1,0 +1,25 @@
+# Node / Vite
+node_modules/
+dist/
+*.local
+frontend/node_modules
+frontend/dist
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info
+.venv/
+venv/
+ENV/
+.pdm-
+
+# Env files
+.env
+*.env
+backend/.env
+frontend/.env
+
+# System files
+.DS_Store
+Thumbs.db
