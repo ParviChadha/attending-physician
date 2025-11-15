@@ -1,6 +1,10 @@
 """Application configuration helpers."""
 
+from __future__ import annotations
+
 from functools import lru_cache
+from typing import List, Optional, Union
+
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -15,7 +19,7 @@ class Settings(BaseSettings):
         default='postgresql://postgres:postgres@localhost:5432/attending_physician',
         alias='DATABASE_URL',
     )
-    allowed_origins_raw: list[str] | str | None = Field(default=None, alias='ALLOWED_ORIGINS')
+    allowed_origins_raw: Union[List[str], str, None] = Field(default=None, alias='ALLOWED_ORIGINS')
     api_prefix: str = Field(default='/api', alias='API_PREFIX')
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
