@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         default='postgresql://postgres:postgres@localhost:5432/attending_physician',
         alias='DATABASE_URL',
     )
-    _allowed_origins: list[str] | str | None = Field(default=None, alias='ALLOWED_ORIGINS')
+    allowed_origins_raw: list[str] | str | None = Field(default=None, alias='ALLOWED_ORIGINS')
     api_prefix: str = Field(default='/api', alias='API_PREFIX')
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     def allowed_origins(self) -> list[str]:
         """Return a normalized list of allowed origins."""
 
-        value = self._allowed_origins
+        value = self.allowed_origins_raw
         if value is None:
             return DEFAULT_ALLOWED_ORIGINS.copy()
         if isinstance(value, str):
