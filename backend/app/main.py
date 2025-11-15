@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+import logging
+from typing import Any, Optional, Sequence
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +16,8 @@ from .database import Base, engine, get_session
 from .physician import AttendingPhysicianAPI
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
+_rag_system: Optional[Any] = None
 
 app = FastAPI(
     title='Attending Physician API',
@@ -37,13 +40,43 @@ def _create_tables() -> None:
     Base.metadata.create_all(bind=engine)
 
 
+def _get_rag_system() -> Optional[Any]:
+    """Lazily instantiate the Postgres-backed RAG helper when enabled."""
+
+    global _rag_system
+    if not settings.rag_enabled:
+        return None
+
+    if _rag_system is None:
+        try:
+            from .physician.rag import PostgresMedicalRAG  # type: ignore import-not-found
+
+            _rag_system = PostgresMedicalRAG(
+                engine=engine,
+                top_k=settings.rag_top_k,
+                model_name=settings.rag_model_name,
+            )
+            logger.info(
+                "Initialized PostgresMedicalRAG with top_k=%s, model=%s",
+                settings.rag_top_k,
+                settings.rag_model_name,
+            )
+        except Exception as exc:  # pragma: no cover - best effort guard
+            logger.warning("Failed to initialize RAG system: %s", exc)
+            _rag_system = None
+    return _rag_system
+
+
 def _build_workflow_api(state: dict[str, Any] | None = None) -> AttendingPhysicianAPI:
     """Instantiate the Anthropic workflow wrapper and optionally load state."""
 
     if not settings.anthropic_api_key:
         raise HTTPException(status_code=500, detail='ANTHROPIC_API_KEY is not configured.')
 
-    api = AttendingPhysicianAPI(api_key=settings.anthropic_api_key)
+    api = AttendingPhysicianAPI(
+        api_key=settings.anthropic_api_key,
+        rag_system=_get_rag_system(),
+    )
     if state:
         api.load_state(state)
     return api
@@ -195,3 +228,19 @@ def get_chat_session(
         created_at=session.created_at,
         updated_at=session.updated_at,
     )
+
+
+@app.get(
+    f"{settings.api_prefix}/chat/sessions/{{session_id}}/medical-questions",
+    tags=['chat'],
+)
+def get_session_medical_questions(
+    session_id: str = Path(..., description='Chat session identifier.'),
+    db: Session = Depends(get_session),
+) -> dict[str, Any]:
+    session = db.query(models.ChatSession).filter(models.ChatSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail='Session not found.')
+
+    api = _build_workflow_api(session.state)
+    return api.get_medical_questions()

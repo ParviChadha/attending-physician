@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     allowed_origins_raw: Union[List[str], str, None] = Field(default=None, alias='ALLOWED_ORIGINS')
     api_prefix: str = Field(default='/api', alias='API_PREFIX')
     anthropic_api_key: Optional[str] = Field(default=None, alias='ANTHROPIC_API_KEY')
+    rag_enabled: bool = Field(default=False, alias='RAG_ENABLED')
+    rag_top_k: int = Field(default=3, alias='RAG_TOP_K')
+    rag_model_name: str = Field(default='NeuML/pubmedbert-base-embeddings', alias='RAG_MODEL_NAME')
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
 

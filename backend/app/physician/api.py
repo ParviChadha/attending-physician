@@ -17,7 +17,7 @@ class AttendingPhysicianAPI:
     Returns JSON responses suitable for web chat UI integration
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, rag_system: Optional[Any] = None):
         """
         Initialize the API
 
@@ -27,9 +27,14 @@ class AttendingPhysicianAPI:
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set and no API key provided")
+        self._rag_system = rag_system
 
         # Initialize orchestrator with JSON output format
-        self.orchestrator = Agent4_Orchestrator(self.api_key, output_format="json")
+        self.orchestrator = Agent4_Orchestrator(
+            self.api_key,
+            output_format="json",
+            rag_system=self._rag_system,
+        )
 
     # --------------------------------------------------------------------- #
     # Session lifecycle helpers
@@ -75,6 +80,10 @@ class AttendingPhysicianAPI:
 
         hydrated_state = deepcopy(state)
         hydrated_state["conversation_history"] = history
+        hydrated_state.setdefault("medical_questions", [])
+        hydrated_state.setdefault("rag_context", "")
+        hydrated_state.setdefault("rag_context_available", False)
+        hydrated_state.setdefault("rag_results", {})
         self.orchestrator.session_state = hydrated_state
 
     def export_state(self) -> Dict[str, Any]:
@@ -200,7 +209,10 @@ class AttendingPhysicianAPI:
                 "data": {
                     "metrics_status": self.orchestrator.session_state["metrics_status"],
                     "interaction_count": self.orchestrator.session_state["interaction_count"],
-                    "max_interactions": self.orchestrator.session_state["max_interactions"]
+                    "max_interactions": self.orchestrator.session_state["max_interactions"],
+                    "medical_questions": self.orchestrator.session_state.get("medical_questions", []),
+                    "rag_context_available": self.orchestrator.session_state.get("rag_context_available", False),
+                    "rag_context": self.orchestrator.session_state.get("rag_context", ""),
                 }
             }
         except Exception as e:
@@ -208,6 +220,26 @@ class AttendingPhysicianAPI:
                 "success": False,
                 "error": str(e),
                 "error_type": type(e).__name__
+            }
+
+    def get_medical_questions(self) -> Dict[str, Any]:
+        """Return the most recently extracted medical knowledge questions."""
+
+        try:
+            questions = self.orchestrator.session_state.get("medical_questions", [])
+            return {
+                "success": True,
+                "data": {
+                    "questions": questions,
+                    "count": len(questions),
+                    "rag_context_available": self.orchestrator.session_state.get("rag_context_available", False),
+                },
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "error_type": type(e).__name__,
             }
 
 

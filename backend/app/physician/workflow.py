@@ -45,6 +45,82 @@ class StudentResponse:
     feedback: str
 
 
+class Agent0_QuestionExtractor:
+    """
+    Extracts medical knowledge questions from student presentations.
+    These questions are used to query a RAG system for contextual information.
+    """
+
+    def __init__(self, api_key: str):
+        self.client = anthropic.Anthropic(api_key=api_key)
+
+    def extract_questions(self, student_presentation: str) -> List[str]:
+        """
+        Extract medical knowledge questions from the student presentation.
+        """
+
+        prompt = f"""You are a medical knowledge extraction system. Analyze the following student case presentation and generate specific questions about medical information, conditions, diagnoses, treatments, and clinical knowledge mentioned or implied in the presentation.
+
+Student's case presentation:
+---
+{student_presentation}
+---
+
+Generate 5-10 targeted questions that would help retrieve relevant medical knowledge about:
+- Conditions and diseases mentioned
+- Symptoms and their clinical significance
+- Diagnostic tests and their interpretation
+- Risk factors and their implications
+- Treatment approaches
+- Differential diagnoses considerations
+
+CRITICAL: Return ONLY a valid JSON object without any markdown formatting.
+
+Format:
+{{
+  "questions": [
+    "What are the typical EKG findings in acute coronary syndrome?",
+    "What is the sensitivity and specificity of troponin for diagnosing MI?",
+    "How does smoking affect cardiovascular risk?"
+  ]
+}}"""
+
+        response = self.client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        response_text = response.content[0].text.strip()
+        response_text = response_text.replace('```json', '').replace('```', '').strip()
+        result = json.loads(response_text)
+
+        return result["questions"]
+
+
+class RAGSystemPlaceholder:
+    """
+    Placeholder for RAG (Retrieval-Augmented Generation) system.
+    This will be replaced with actual RAG implementation later.
+    """
+
+    def query(self, questions: List[str]) -> Dict[str, str]:
+        """Return empty context until a real RAG system is supplied."""
+        return {question: "" for question in questions}
+
+    def get_formatted_context(self, rag_results: Dict[str, str]) -> str:
+        """Format RAG results into a readable context string for the evaluator."""
+        if not rag_results or all(not v for v in rag_results.values()):
+            return ""
+
+        formatted_parts = []
+        for question, context in rag_results.items():
+            if context:
+                formatted_parts.append(f"Q: {question}\nContext: {context}")
+
+        return "\n\n".join(formatted_parts)
+
+
 class Agent1_MetricsEvaluator:
     """
     Evaluates student presentation against the 9 key metrics
@@ -102,14 +178,26 @@ class Agent1_MetricsEvaluator:
     def __init__(self, api_key: str):
         self.client = anthropic.Anthropic(api_key=api_key)
     
-    def evaluate(self, student_presentation: str) -> Dict:
+    def evaluate(self, student_presentation: str, rag_context: str = "") -> Dict:
         """
         Evaluates the student presentation and returns structured metrics status
         """
-        
+
+        context_section = ""
+        if rag_context:
+            context_section = f"""
+ADDITIONAL MEDICAL KNOWLEDGE CONTEXT (from knowledge base):
+---
+{rag_context}
+---
+
+Use this context to better evaluate the student's presentation accuracy and completeness.
+"""
+
         prompt = f"""You are an expert medical attending physician evaluating a student's case presentation.
 
 {self.METRICS_RUBRIC}
+{context_section}
 
 Student's case presentation:
 ---
@@ -313,7 +401,7 @@ class Agent4_Orchestrator:
     Main orchestrator that manages the conversation flow
     """
 
-    def __init__(self, api_key: str, output_format: str = "json"):
+    def __init__(self, api_key: str, output_format: str = "json", rag_system: Optional[object] = None):
         """
         Initialize orchestrator
 
@@ -324,8 +412,10 @@ class Agent4_Orchestrator:
         self.api_key = api_key
         self.output_format = output_format  # "json" or "terminal"
         self.evaluator = Agent1_MetricsEvaluator(api_key)
+        self.question_extractor = Agent0_QuestionExtractor(api_key)
         self.question_generator = Agent2_QuestionGenerator(api_key)
         self.understanding_evaluator = Agent3_UnderstandingEvaluator(api_key)
+        self.rag_system = rag_system or RAGSystemPlaceholder()
 
         self.session_state = {
             "original_presentation": "",
@@ -333,7 +423,11 @@ class Agent4_Orchestrator:
             "conversation_history": [],
             "metrics_status": {},
             "interaction_count": 0,
-            "max_interactions": 15
+            "max_interactions": 15,
+            "medical_questions": [],
+            "rag_context": "",
+            "rag_context_available": False,
+            "rag_results": {}
         }
     
     def start_session(self, student_presentation: str):
@@ -345,12 +439,37 @@ class Agent4_Orchestrator:
         """
         self.session_state["original_presentation"] = student_presentation
         self.session_state["interaction_count"] = 0
+        self.session_state["conversation_history"] = []
+        self.session_state["metrics_status"] = {}
+        self.session_state["medical_questions"] = []
+        self.session_state["rag_context"] = ""
+        self.session_state["rag_results"] = {}
+        self.session_state["rag_context_available"] = False
 
-        # Initial evaluation
+        medical_questions: List[str] = []
+        try:
+            medical_questions = self.question_extractor.extract_questions(student_presentation)
+        except Exception:
+            medical_questions = []
+        self.session_state["medical_questions"] = medical_questions
+
+        rag_context = ""
+        rag_results: Dict[str, str] = {}
+        if self.rag_system and medical_questions:
+            try:
+                rag_results = self.rag_system.query(medical_questions)
+                rag_context = self.rag_system.get_formatted_context(rag_results)
+            except Exception:
+                rag_results = {}
+                rag_context = ""
+        self.session_state["rag_results"] = rag_results
+        self.session_state["rag_context"] = rag_context
+        self.session_state["rag_context_available"] = bool(rag_context.strip())
+
         if self.output_format == "terminal":
             print("🔍 Evaluating initial presentation...")
 
-        evaluation = self.evaluator.evaluate(student_presentation)
+        evaluation = self.evaluator.evaluate(student_presentation, rag_context=rag_context)
         self.session_state["initial_evaluation"] = evaluation
 
         # Build metrics status tracking
@@ -601,7 +720,9 @@ class Agent4_Orchestrator:
                     "total": len(self.session_state["metrics_status"])
                 },
                 "metrics_status": self.session_state["metrics_status"],
-                "interaction_count": self.session_state["interaction_count"]
+                "interaction_count": self.session_state["interaction_count"],
+                "medical_questions_extracted": self.session_state.get("medical_questions", []),
+                "rag_context_available": self.session_state.get("rag_context_available", False)
             }
         else:
             formatted = "\n\n".join([
@@ -641,7 +762,9 @@ class Agent4_Orchestrator:
                     "total": len(self.session_state["metrics_status"])
                 },
                 "metrics_status": self.session_state["metrics_status"],
-                "interaction_count": self.session_state["interaction_count"]
+                "interaction_count": self.session_state["interaction_count"],
+                "medical_questions_extracted": self.session_state.get("medical_questions", []),
+                "rag_context_available": self.session_state.get("rag_context_available", False)
             }
         else:
             formatted = "\n\n".join([
@@ -670,7 +793,10 @@ class Agent4_Orchestrator:
                     "all_metrics_met": True
                 },
                 "metrics_status": self.session_state["metrics_status"],
-                "interaction_count": self.session_state["interaction_count"]
+                "interaction_count": self.session_state["interaction_count"],
+                "medical_questions_extracted": self.session_state.get("medical_questions", []),
+                "rag_context_available": self.session_state.get("rag_context_available", False),
+                "rag_context": self.session_state.get("rag_context", "")
             }
             if evaluation:
                 result["final_evaluation"] = {
@@ -722,7 +848,10 @@ Keep up the great work! 🎉
                 },
                 "remaining_gaps": remaining,
                 "metrics_status": self.session_state["metrics_status"],
-                "interaction_count": self.session_state["interaction_count"]
+                "interaction_count": self.session_state["interaction_count"],
+                "medical_questions_extracted": self.session_state.get("medical_questions", []),
+                "rag_context_available": self.session_state.get("rag_context_available", False),
+                "rag_context": self.session_state.get("rag_context", "")
             }
         else:
             return f"""
@@ -747,6 +876,9 @@ Great effort today! 💪
         return {
             "total_interactions": self.session_state["interaction_count"],
             "metrics_status": self.session_state["metrics_status"],
+             "medical_questions": self.session_state.get("medical_questions", []),
+             "rag_context": self.session_state.get("rag_context", ""),
+             "rag_context_available": self.session_state.get("rag_context_available", False),
             "conversation_history": [
                 {
                     "question": turn["question"],
