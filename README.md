@@ -1,61 +1,88 @@
-# Attending Physician Landing Page
+# Attending Physician
 
-A minimal two-tier stack for promoting and collecting leads for your chatbot:
+## Project overview
 
-- `frontend/` – React + Vite landing page deployable to GitHub Pages.
-- `backend/` – FastAPI service with PostgreSQL persistence for form submissions.
+Attending Physician is an AI-powered clinical reasoning coach designed to simulate an expert attending physician for triage training. It evaluates case presentations across nine expert clinical competencies and generates targeted Socratic questions to help learners uncover gaps in diagnostic reasoning and prioritization. Feedback is enriched through a retrieval-augmented system built from 200,000 PubMedQA entries.
 
-You can host the static frontend on Pages and deploy the backend/database to a managed PaaS such as Render or Railway for the simplest setup.
-
-## Getting started
+## Installation / setup instructions
 
 ### Frontend
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env  # update VITE_API_BASE_URL after the backend is live
+cp .env.example .env   # set VITE_API_BASE_URL
 npm run dev
 ```
 
-Run `npm run deploy` to publish the production build to GitHub Pages (it pushes `dist/` to the `gh-pages` branch using the `gh-pages` CLI).
+Deploy to GitHub Pages using:
+
+```bash
+npm run deploy
+```
 
 ### Backend
 
 ```bash
 cd backend
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate   # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
-cp .env.example .env  # provide DATABASE_URL + ALLOWED_ORIGINS
+cp .env.example .env   # set DATABASE_URL and ALLOWED_ORIGINS
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Create the PostgreSQL database referenced in `DATABASE_URL` first. During startup the API creates the `leads` table automatically and exposes Swagger docs at `/docs`. For quick local testing you can point `DATABASE_URL` at `sqlite:///./dev.db` and keep `ALLOWED_ORIGINS=http://localhost:5173`, then swap back to Postgres before deploying.
+For local testing, set `DATABASE_URL=sqlite:///./dev.db`. Swagger documentation is available at `/docs`.
 
-#### Retrieval-Augmented Workflow
+## Usage guide
 
-The backend now ships with an optional RAG layer that enriches the Attending Physician workflow using the `medical_embeddings` table in Postgres:
+1. Start both the frontend and backend.
+2. Open the frontend in a browser.
+3. Submit a triage case presentation.
+4. The backend evaluates it, retrieves context through RAG if enabled, and returns feedback.
+5. Iterate until competency goals are reached.
 
-1. Run `~/Downloads/ap-test-json2/embed_to_sqlite.ipynb` (or your own pipeline) to build `pubmedqa_embeddings.db`.
-2. Import those embeddings into Postgres with `backend/scripts/upload_embeddings.py --postgres-url "<render-url>" --sslrootcert isrgrootx1-selfsigned.pem`. The script is resumable via `--offset`.
-3. Set `RAG_ENABLED=true` (and optionally `RAG_TOP_K`, `RAG_MODEL_NAME`) on the FastAPI deployment. Responses will report `medical_questions_extracted` and `rag_context_available` so the UI can confirm retrieval occurred.
+## Tech stack
 
-## Deploying the stack
+* **Frontend:** React, Vite, GitHub Pages
+* **Backend:** FastAPI, SQLAlchemy, PostgreSQL
+* **ML:** PubMedBERT embeddings, vector retrieval
+* **Infrastructure:** Render or Railway
+* **RAG:** PubMedQA embeddings + top-K retrieval
 
-1. **Backend + DB** – Use a PaaS with HTTPS and managed Postgres (Render, Railway, Fly.io, Heroku). Supply `DATABASE_URL`, `ALLOWED_ORIGINS`, and `API_PREFIX` env vars. Render can host both the API and DB so you avoid custom DevOps—just be sure both resources live in the same region to keep latency low.
-2. **Frontend** – In GitHub, enable Pages for the repository. Run `npm run deploy` (locally or via a GitHub Actions workflow) whenever you want to publish updates. The Vite config already uses relative asset paths so it works under `/repo-name`.
-3. **Connect both** – Set `VITE_API_BASE_URL` in `frontend/.env` to the backend’s public HTTPS URL. The contact form will now POST to `/api/leads`. If you’re testing locally, keep the `.env` pointing at `http://localhost:8000` and `npm run dev` for the frontend.
+## Claude API integration
 
-## Repository layout
+Claude powers the four-agent architecture responsible for:
 
-```
-frontend/   React marketing site for the chatbot
-backend/    FastAPI + SQLAlchemy service for persistence
-```
+* Evaluating triage presentations
+* Generating Socratic questions
+* Assessing learner responses
+* Managing adaptive conversation flow
 
-## Next steps
+Claude uses retrieved PubMedQA context for evidence-grounded reasoning.
 
-- Customize the hero copy and CTAs, or swap the theme tokens in `src/App.css`.
-- Extend the backend with auth, rate limiting, or chat completion routes.
-- Add CI/CD: e.g., GitHub Actions workflow that runs frontend lint/tests and deploys both services.
+## Challenges & solutions
+
+**Challenge:** Multi-agent orchestration without exceeding token limits
+**Solution:** Built four specialized agents with controlled context routing.
+
+**Challenge:** Embedding 200,000 PubMedQA samples
+**Solution:** Used batch processing, resumable scripts, and error handling.
+
+**Challenge:** Coordinating deployments across GitHub Pages, Render/Railway, and managed Postgres
+**Solution:** Standardized environment variables, configured CORS, and aligned hosting regions.
+
+## Future plans
+
+* Expand RAG corpus with specialty-specific literature
+* Add streaming responses and rate limiting
+* Build analytics dashboards for educators
+* Pursue accreditation with nursing schools and hospitals
+* Implement scalable vector search and caching
+
+## Team members & contributions
+
+**Yann** – Full-stack engineering, backend architecture, deployment
+**Parvi** - multi-agent system, frontend
+**Abigail** - multi-agent system, frontend
+**Caleb** - RAG pipeline
