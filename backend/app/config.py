@@ -1,8 +1,10 @@
 """Application configuration helpers."""
 
 from functools import lru_cache
-from pydantic import Field, field_validator
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEFAULT_ALLOWED_ORIGINS = ['http://localhost:5173']
 
 
 class Settings(BaseSettings):
@@ -13,19 +15,19 @@ class Settings(BaseSettings):
         default='postgresql://postgres:postgres@localhost:5432/attending_physician',
         alias='DATABASE_URL',
     )
-    allowed_origins: list[str] = Field(
-        default_factory=lambda: ['http://localhost:5173'],
-        alias='ALLOWED_ORIGINS',
-    )
+    _allowed_origins: list[str] | str | None = Field(default=None, alias='ALLOWED_ORIGINS')
     api_prefix: str = Field(default='/api', alias='API_PREFIX')
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
 
-    @field_validator('allowed_origins', mode='before')
-    @classmethod
-    def split_origins(cls, value: str | list[str] | None) -> list[str]:
+    @computed_field(return_type=list[str])
+    @property
+    def allowed_origins(self) -> list[str]:
+        """Return a normalized list of allowed origins."""
+
+        value = self._allowed_origins
         if value is None:
-            return []
+            return DEFAULT_ALLOWED_ORIGINS.copy()
         if isinstance(value, str):
             return [item.strip() for item in value.split(',') if item.strip()]
         return value
