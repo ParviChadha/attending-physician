@@ -31,13 +31,13 @@ cp .env.example .env  # provide DATABASE_URL + ALLOWED_ORIGINS
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Create the PostgreSQL database referenced in `DATABASE_URL` first. During startup the API creates the `leads` table automatically and exposes Swagger docs at `/docs`.
+Create the PostgreSQL database referenced in `DATABASE_URL` first. During startup the API creates the `leads` table automatically and exposes Swagger docs at `/docs`. For quick local testing you can point `DATABASE_URL` at `sqlite:///./dev.db` and keep `ALLOWED_ORIGINS=http://localhost:5173`, then swap back to Postgres before deploying.
 
 ## Deploying the stack
 
-1. **Backend + DB** – Use a PaaS with HTTPS and managed Postgres (Render, Railway, Fly.io, Heroku). Supply `DATABASE_URL`, `ALLOWED_ORIGINS`, and `API_PREFIX` env vars. Render can host both the API and DB so you avoid custom DevOps.
+1. **Backend + DB** – Use a PaaS with HTTPS and managed Postgres (Render, Railway, Fly.io, Heroku). Supply `DATABASE_URL`, `ALLOWED_ORIGINS`, and `API_PREFIX` env vars. Render can host both the API and DB so you avoid custom DevOps—just be sure both resources live in the same region to keep latency low.
 2. **Frontend** – In GitHub, enable Pages for the repository. Run `npm run deploy` (locally or via a GitHub Actions workflow) whenever you want to publish updates. The Vite config already uses relative asset paths so it works under `/repo-name`.
-3. **Connect both** – Set `VITE_API_BASE_URL` in `frontend/.env` to the backend’s public HTTPS URL. The contact form will now POST to `/api/leads`.
+3. **Connect both** – Set `VITE_API_BASE_URL` in `frontend/.env` to the backend’s public HTTPS URL. The contact form will now POST to `/api/leads`. If you’re testing locally, keep the `.env` pointing at `http://localhost:8000` and `npm run dev` for the frontend.
 
 ## Repository layout
 
