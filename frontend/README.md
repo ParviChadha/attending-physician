@@ -17,7 +17,9 @@ cp .env.example .env
 
 | Variable | Description |
 | --- | --- |
-| `VITE_API_BASE_URL` | Public HTTPS URL of the FastAPI backend (no trailing slash). The contact form posts to `${VITE_API_BASE_URL}/api/leads`. |
+| `VITE_API_BASE_URL` | Public HTTPS URL of the FastAPI backend (no trailing slash). The chat demo calls `${VITE_API_BASE_URL}/api/chat/sessions` and `${VITE_API_BASE_URL}/api/chat/sessions/{id}`, and the lead form posts to `${VITE_API_BASE_URL}/api/leads`. |
+
+If the variable is missing, the UI still renders but the form shows a warning instead of attempting a submission. The live chatbot demo will also stay in “misconfigured” mode until this base URL is present.
 
 If the variable is missing, the UI still renders but the form shows a warning instead of attempting a submission.
 

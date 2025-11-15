@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     )
     allowed_origins_raw: Union[List[str], str, None] = Field(default=None, alias='ALLOWED_ORIGINS')
     api_prefix: str = Field(default='/api', alias='API_PREFIX')
+    anthropic_api_key: Optional[str] = Field(default=None, alias='ANTHROPIC_API_KEY')
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
 

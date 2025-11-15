@@ -1,6 +1,8 @@
 """Database models."""
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, func
+from uuid import uuid4
+
+from sqlalchemy import JSON, Column, DateTime, Integer, String, Text, func
 
 from .database import Base
 
@@ -13,3 +15,14 @@ class Lead(Base):
     organization = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class ChatSession(Base):
+    __tablename__ = 'chat_sessions'
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    presentation = Column(Text, nullable=False)
+    state = Column(JSON, nullable=False)
+    status = Column(String(32), nullable=False, default='active')
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
